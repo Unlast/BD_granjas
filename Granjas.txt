@@ -3,7 +3,7 @@ create schema granja;
 use granja;
  
 -- compilar primer calle, localidad, provincia, domicilio y despues todo lo demas-- 
--- ezequiel puto-- 
+
 
 CREATE TABLE IF NOT EXISTS Calle (
     idCalle INT NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS Domicilio (
     PRIMARY KEY (id_domicilio)
 );
    
-CREATE TABLE IF NOT EXISTS Cabaña (
+CREATE TABLE IF NOT EXISTS CabaÃ±a (
     codigo VARCHAR(45),
     razonSocial VARCHAR(45),
     domicilio INT ,
@@ -47,9 +47,9 @@ CREATE TABLE IF NOT EXISTS Cabaña (
 CREATE TABLE IF NOT EXISTS genetica (
     codigo VARCHAR(45),
     nombre VARCHAR(45) NULL,
-    codigo_cabaña VARCHAR(45) NULL,
-    FOREIGN KEY (codigo_cabaña)
-        REFERENCES cabaña (codigo),
+    codigo_cabaÃ±a VARCHAR(45) NULL,
+    FOREIGN KEY (codigo_cabaÃ±a)
+        REFERENCES cabaÃ±a (codigo),
     PRIMARY KEY (codigo)
 );
 
@@ -172,11 +172,11 @@ insert into domicilio values (id_domicilio,calle_idCalle,numero,localidad_idLoca
 (7,7,"2368",3,1);
 
 
-insert into cabaña values (codigo,razonSocial,domicilio,cuit),
-("1","Cabaña Camila SA",1,"30-12345678-9"),
-("2","Cabaña Lohmann SRL",2,"30-11111111-7");
+insert into cabaÃ±a values (codigo,razonSocial,domicilio,cuit),
+("1","CabaÃ±a Camila SA",1,"30-12345678-9"),
+("2","CabaÃ±a Lohmann SRL",2,"30-11111111-7");
 
-insert into genetica values (codigo, nombre, codigo_cabaña),
+insert into genetica values (codigo, nombre, codigo_cabaÃ±a),
 ("LB1","Lohmann Brown B-36","1"),
 ("LW1","Lohmann White W-41","1"),
 ("CB1","Camila Brown 2789","2"),
@@ -245,7 +245,7 @@ insert into cliente values(cuit, razon_social,domicilio),
 ("30-22222222-2","Avicola Santa Fe SRL",4),
 ("30-33333333-3","Avicola Romero SA",5),
 ("30-44444444-4","Granja San Martin SRL",6),
-("20-22222222-9","José López",7);
+("20-22222222-9","JosÃ© LÃ³pez",7);
 
 insert into factura (numero_factura, fecha, cuit_cliente, codigo_producto, cant_producto, precio_producto) values
 (1,'2018-8-10',"20-11111111-1","HBD",70,70),
@@ -287,11 +287,11 @@ insert into factura (numero_factura, fecha, cuit_cliente, codigo_producto, cant_
 (15,'2018-8-12',"30-33333333-3","HBD",70,30),
 (15,'2018-8-12',"30-33333333-3","HCM",180,50),
 (15,'2018-8-12',"30-33333333-3","HBM",160,20);
--- 1_Listar planteles en granja, indicando su genética y cabaña.
+-- 1_Listar planteles en granja, indicando su genÃ©tica y cabaÃ±a.
 -- Preguntar si tiene que mostrar todos los datos
 SELECT pl.nombre,g.nombre,c.razonSocial  from plantel pl
 	INNER JOIN genetica g ON pl.genetica_gallina = g.codigo
-	INNER JOIN cabaña c ON g.codigo_cabaña = c.codigo;
+	INNER JOIN cabaÃ±a c ON g.codigo_cabaÃ±a = c.codigo;
 	
     	SELECT pl.tipo_alimento, AVG(pl.cantidad_alimento) as Promedio_alimentos from planilla pl 
     inner join planilla pl ON a.codigo = pl.tipo_alimento 
@@ -301,14 +301,14 @@ SELECT
     SUM(cantidad_gallinas) AS total
 FROM
     galpon;
--- 3_Total de gallinas en cada galpón, indicando a qué plantel corresponden.
+-- 3_Total de gallinas en cada galpÃ³n, indicando a quÃ© plantel corresponden.
 SELECT 
     g.cantidad_gallinas, g.codigo, p.codigo
 FROM
     galpon g
         INNER JOIN
     plantel p ON g.codigo = p.galpon_codigo;-- falta un plantel
--- 4)Porcentaje de gallinas en cada galpón, con respecto al total de gallinas alojadas en la granja
+-- 4)Porcentaje de gallinas en cada galpÃ³n, con respecto al total de gallinas alojadas en la granja
 SELECT g.cantidad_gallinas as totalGallinasGalpon,
 	sum(g.cantidad_gallinas)/(SELECT SUM(g.cantidad_gallinas)from galpon g)*100 as porcentaje
     from galpon g
@@ -320,7 +320,7 @@ SELECT g.cantidad_gallinas as totalGallinasGalpon,
     group by (pl.codigo);
 		
         
--- 6)Listado de las genéticas de las que no hay planteles en ningún galpón.
+-- 6)Listado de las genÃ©ticas de las que no hay planteles en ningÃºn galpÃ³n.
 SELECT 
     gn.codigo, gn.nombre, p.codigo, p.nombre
 FROM
