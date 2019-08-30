@@ -1,10 +1,6 @@
 create schema granja;
-
 use granja;
- 
 -- compilar primer calle, localidad, provincia, domicilio y despues todo lo demas-- 
-
-
 CREATE TABLE IF NOT EXISTS Calle (
     idCalle INT NOT NULL,
     nombre VARCHAR(45) NULL,
@@ -21,25 +17,28 @@ CREATE TABLE IF NOT EXISTS Provincia (
     idProvincia INT NOT NULL,
     nombre VARCHAR(45) NULL,
     PRIMARY KEY (idProvincia)
-); 
+);
 
 CREATE TABLE IF NOT EXISTS Domicilio (
     id_domicilio INT NOT NULL,
     calle_idCalle INT NULL,
-    numero VARCHAR (45) NULL,
+    numero VARCHAR(45) NULL,
     localidad_idLocalidad INT NULL,
     provincia_idProvincia INT NULL,
-    foreign key (calle_idCalle) references Calle(idCalle),
-    foreign key (localidad_IdLocalidad) references Localidad (idLocalidad),
-    foreign key (provincia_idProvincia) references Provincia (idProvincia),
+    FOREIGN KEY (calle_idCalle)
+        REFERENCES Calle (idCalle),
+    FOREIGN KEY (localidad_IdLocalidad)
+        REFERENCES Localidad (idLocalidad),
+    FOREIGN KEY (provincia_idProvincia)
+        REFERENCES Provincia (idProvincia),
     PRIMARY KEY (id_domicilio)
 );
    
 CREATE TABLE IF NOT EXISTS Cabaña (
     codigo VARCHAR(45),
     razonSocial VARCHAR(45),
-    domicilio INT ,
-    cuit VARCHAR(45) ,
+    domicilio INT,
+    cuit VARCHAR(45),
     PRIMARY KEY (codigo),
     FOREIGN KEY (domicilio)
         REFERENCES Domicilio (id_domicilio)
@@ -69,17 +68,18 @@ CREATE TABLE IF NOT EXISTS Plantel (
     PRIMARY KEY (codigo),
     FOREIGN KEY (genetica_gallina)
         REFERENCES genetica (codigo),
-	FOREIGN KEY (galpon_codigo)
-		REFERENCES galpon(codigo)
+    FOREIGN KEY (galpon_codigo)
+        REFERENCES galpon (codigo)
 );
   
 CREATE TABLE plantel_x_galpon (
     codigo_galpon INT UNIQUE,
     codigo_plantel VARCHAR(45),
-    PRIMARY KEY (codigo_galpon,codigo_plantel),
-    foreign key (codigo_galpon) references galpon(codigo),
-    foreign key (codigo_plantel) references plantel(codigo)
-    
+    PRIMARY KEY (codigo_galpon , codigo_plantel),
+    FOREIGN KEY (codigo_galpon)
+        REFERENCES galpon (codigo),
+    FOREIGN KEY (codigo_plantel)
+        REFERENCES plantel (codigo)
 );
 
 CREATE TABLE alimento (
@@ -287,17 +287,19 @@ insert into factura (numero_factura, fecha, cuit_cliente, codigo_producto, cant_
 (15,'2018-8-12',"30-33333333-3","HBD",70,30),
 (15,'2018-8-12',"30-33333333-3","HCM",180,50),
 (15,'2018-8-12',"30-33333333-3","HBM",160,20);
+
 -- 1_Listar planteles en granja, indicando su genética y cabaña.
 -- Preguntar si tiene que mostrar todos los datos
-SELECT pl.nombre,g.nombre,c.razonSocial  from plantel pl
-	INNER JOIN genetica g ON pl.genetica_gallina = g.codigo
-	INNER JOIN cabaña c ON g.codigo_cabaña = c.codigo;
-	
-    	SELECT pl.tipo_alimento, AVG(pl.cantidad_alimento) as Promedio_alimentos from planilla pl 
-    inner join planilla pl ON a.codigo = pl.tipo_alimento 
-    group by pl.tipo_alimento;
--- 2_Total de gallinas alojadas en la granja. 
 SELECT 
+    pl.nombre, g.nombre, c.razonSocial
+FROM
+    plantel pl
+        INNER JOIN
+    genetica g ON pl.genetica_gallina = g.codigo
+        INNER JOIN
+    cabaña c ON g.codigo_cabaña = c.codigo;
+-- 2_Total de gallinas alojadas en la granja. 
+	SELECT 
     SUM(cantidad_gallinas) AS total
 FROM
     galpon;
@@ -309,17 +311,27 @@ FROM
         INNER JOIN
     plantel p ON g.codigo = p.galpon_codigo;-- falta un plantel
 -- 4)Porcentaje de gallinas en cada galpón, con respecto al total de gallinas alojadas en la granja
-SELECT g.cantidad_gallinas as totalGallinasGalpon,
-	sum(g.cantidad_gallinas)/(SELECT SUM(g.cantidad_gallinas)from galpon g)*100 as porcentaje
-    from galpon g
-    group by (g.codigo);
+SELECT 
+    g.cantidad_gallinas AS totalGallinasGalpon,
+    SUM(g.cantidad_gallinas) / (SELECT 
+            SUM(g.cantidad_gallinas)
+        FROM
+            galpon g) * 100 AS porcentaje
+FROM
+    galpon g
+GROUP BY (g.codigo);
 -- 5)
-	SELECT pl.cantidad as totalGallinasGalpon,
-	sum(pl.cantidad)/(SELECT SUM(pl.cantidad)from plantel pl)*100 as porcentaje
-    from plantel pl
-    group by (pl.codigo);
+	SELECT 
+    pl.cantidad AS totalGallinasGalpon,
+    SUM(pl.cantidad) / (SELECT 
+            SUM(pl.cantidad)
+        FROM
+            plantel pl) * 100 AS porcentaje
+FROM
+    plantel pl
+GROUP BY (pl.codigo);
 		
-        
+	
 -- 6)Listado de las genéticas de las que no hay planteles en ningún galpón.
 SELECT 
     gn.codigo, gn.nombre, p.codigo, p.nombre
@@ -337,32 +349,89 @@ FROM
     planilla pl
 GROUP BY pl.tipo_alimento;
 -- 8) Total de alimento entregado a los galpones, acumulado por tipo y que superen el promedio de las entregas
-	SELECT AVG(pl.cantidad_alimento) as Promedio_alimentos, a.nombre, pl.tipo_alimento from planilla pl 
-    inner join alimento a ON a.codigo = pl.tipo_alimento 
-    group by pl.tipo_alimento
-	having AVG(pl.cantidad_alimento) > (SELECT AVG(pl.cantidad_alimento) as promedio_total from planilla pl);
+	SELECT 
+    AVG(pl.cantidad_alimento) AS Promedio_alimentos,
+    a.nombre,
+    pl.tipo_alimento
+FROM
+    planilla pl
+        INNER JOIN
+    alimento a ON a.codigo = pl.tipo_alimento
+GROUP BY pl.tipo_alimento
+HAVING AVG(pl.cantidad_alimento) > (SELECT 
+        AVG(pl.cantidad_alimento) AS promedio_total
+    FROM
+        planilla pl);
     
 -- 9) Total de alimento entregado a los galpones, acumulado por tipo y que superen el promedio de las entregas del tipo.
-	SELECT a.nombre, avg(pl.cantidad_alimento) as Promedio_alimentos  from planilla pl
-     inner join alimento a ON a.codigo = pl.tipo_alimento 
-     having (pl.cantidad_alimento) >(SELECT (pl.cantidad_alimento) as promedio from planilla pl);
--- Total de ventas entre fechas.
+-- CONSULTA PARA VER LOS DATOS	
 SELECT 
-	f.fecha, -- faltan las fechas intermedias
-    COUNT(f.cod_factura)
+    pl.fecha, pl.cantidad_alimento, pl.tipo_alimento, a.nombre
 FROM
-    factura f
-WHERE
-    f.fecha BETWEEN ('2018-8-10') AND '2018-8-14';
--- Total de ventas entre fechas, por producto.
+    planilla pl
+        INNER JOIN
+    alimento a ON a.codigo = pl.tipo_alimento;
+-- CONSULTA PARA VER LOS PROMEDIOS
+	SELECT 
+    AVG(pl.cantidad_alimento) AS Promedio_alimentos,
+    a.nombre,
+    pl.tipo_alimento
+FROM
+    planilla pl
+        INNER JOIN
+    alimento a ON a.codigo = pl.tipo_alimento
+GROUP BY pl.tipo_alimento;
+-- Si se los ordena por fecha, exlcuye varios datos
 SELECT 
-	f.codigo_producto,
-	f.fecha, 
-    COUNT(f.cod_factura)
+    pl.fecha, a.nombre, pl.cantidad_alimento
+FROM
+    planilla pl
+        INNER JOIN
+    alimento a ON a.codigo = pl.tipo_alimento
+GROUP BY pl.tipo_alimento , pl.id_planilla
+HAVING (pl.cantidad_alimento) > (SELECT 
+        AVG(pl.cantidad_alimento)
+    FROM
+        planilla pl);
+     
+-- 10) Total de ventas entre fechas.
+SELECT 
+    f.fecha, COUNT(f.cod_factura)
 FROM
     factura f
 WHERE
     f.fecha BETWEEN ('2018-8-10') AND '2018-8-14'
-    group by f.codigo_producto;
-    
-    
+group by f.fecha;
+-- 11) Total de ventas entre fechas, por producto.
+SELECT 
+    f.codigo_producto, f.fecha, COUNT(f.cod_factura) as productos_vendidos
+FROM
+    factura f
+WHERE
+    f.fecha BETWEEN ('2018-8-10') AND '2018-8-14'
+GROUP BY f.codigo_producto, f.fecha;
+
+-- 12) Detalle de ventas (número factura, fecha, total facturado) entre fechas.
+-- Hay que revisar si lo que pide es lo que muestra o la SUMa de los totales por fecha 
+SELECT  f.cod_factura,f.fecha,(f.cant_producto*f.precio_producto) as total FROM factura f
+	WHERE f.fecha BETWEEN('2018-8-10') AND '2018-8-14'
+		GROUP BY f.cod_factura
+			ORDER BY f.fecha;
+-- 13)Detalle de ventas (número factura, fecha, total facturado) entre fechas cuyo total supere el promedio del total de ventas entre dichas fechas.
+-- CONSULTA PARA AVERIGUAR LOS PROMEDIOS ENTRE FECHAS
+SELECT f.cod_factura, f.fecha,AVG(f.cant_producto*f.precio_producto) as total FROM factura f
+	WHERE f.fecha BETWEEN('2018-8-10') AND '2018-8-14'
+				GROUP BY f.fecha;
+
+SELECT f.fecha, f.cod_factura, (f.cant_producto*f.precio_producto) as total FROM factura f
+	WHERE f.fecha BETWEEN('2018-8-10') AND '2018-8-14'
+		GROUP BY f.cod_factura
+			HAVING AVG(f.cant_producto*f.precio_producto)> (SELECT AVG (f.cant_producto*f.precio_producto) as supera_promedio from factura f );
+            
+-- 14)Detalle de ventas realizadas en la localidad de Lanús.
+SELECT f.cod_factura, f.fecha, (f.cant_producto*f.precio_producto) as total, c.cuit,l.nombre from factura f
+	INNER  JOIN cliente c ON f.cuit_cliente = c.cuit
+		INNER JOIN domicilio d ON c.domicilio = d.id_domicilio
+			INNER JOIN localidad l ON d.localidad_idLocalidad = l.idLocalidad
+				WHERE l.idLocalidad=3;
+				
