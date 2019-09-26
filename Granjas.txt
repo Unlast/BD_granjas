@@ -475,3 +475,16 @@ SELECT
 SELECT f.fecha, -SUM(f.cant_producto) AS total_venta from factura f group by f.fecha
 	
 	
+	select alimento, sum(cantidad)
+	from envio e1
+	where e1.cantidad > (select avg(e2.cantidad)
+	from envio e2
+	where e1.alimento = e2.alimento)
+	
+	select alimento, sum(cantidad)
+	from envio e
+	(select alimento, avg(cantidad) promedio from envio group by alimento)
+	as p
+	where p.alimento = e.alimento
+	and e.cantidad > p.promedio
+	
